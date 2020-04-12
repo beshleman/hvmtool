@@ -1,0 +1,58 @@
+#!/bin/bash
+
+set -e
+
+IFS='' read -r -d 'EOF'  usage <<END
+
+$(basename $0) <cd-image>
+
+Create and launch an HVM on XCP-ng
+
+cd-image: The install CD image.  Can be a file path or web URL.
+EOF
+END
+
+die() {
+	echo "$@" >&2
+	exit 1
+}
+
+[[ "$#" != "1" ]] && {
+	die "${usage}"
+}
+
+uri=$1
+
+if [[ "${uri}" =~ http ]];
+then
+	wget "${uri}"
+	CD_PATH=$(readlink -e ${uri})
+else
+	CD_PATH=${uri}
+fi
+
+CD_NAME=$(basename ${CD_PATH})
+CD_ISO="/var/opt/xen/iso_import/${CD_NAME}"
+
+[[ "${CD_PATH}" != "${CD_ISO}" ]] && {
+	mv ${CD_PATH} ${CD_ISO}
+}
+
+ISO_LIB_NAME="my-iso-library"
+
+SR_ID=$(xe sr-list name-label=${ISO_LIB_NAME} --minimal)
+if [[ -z "${SR_ID}" ]];
+then
+	xe sr-create name-label="${ISO_LIB_NAME}" type=iso content-type=iso device-config:legacy_mode=true device-config:location=/var/opt/xen/iso_import/
+fi
+
+VM_ID=$(xe vm-install new-name-label=TestVM1 template="Other install media")
+LOCALSR_ID=$(xe sr-list name-label="Local storage" --minimal)
+VDI_ID=$(xe vdi-create name-label="VDI for TestVM1" sr-uuid=$LOCALSR_ID type=user virtual-size=10GiB)
+VDI_ID=$(xe vdi-create name-label="VDI for TestVM1" sr-uuid=$LOCALSR_ID type=user virtual-size=10GiB)
+VBD_ID=$(xe vbd-create vdi-uuid=$VDI_ID vm-uuid=$VM_ID bootable=false type=Disk device=xvda)
+
+xe vm-param-set uuid=$VM_ID HVM-boot-params:firmware=uefi
+xe vm-cd-add vm=$VM_ID device=1 cd-name=$(basename $CD_ISO)
+
+echo "${VM_ID}"
