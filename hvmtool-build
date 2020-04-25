@@ -18,7 +18,12 @@ die() {
 }
 
 [[ "$#" != "1" ]] && {
-	die "${usage}"
+        die "${usage}"
+}
+
+[[ "$@" =~ "--help" ]] && {
+        echo "${usage}"
+        exit 0
 }
 
 uri=$1
@@ -49,9 +54,9 @@ fi
 VM_ID=$(xe vm-install new-name-label=TestVM1 template="Other install media")
 LOCALSR_ID=$(xe sr-list name-label="Local storage" --minimal)
 VDI_ID=$(xe vdi-create name-label="VDI for TestVM1" sr-uuid=$LOCALSR_ID type=user virtual-size=10GiB)
-VDI_ID=$(xe vdi-create name-label="VDI for TestVM1" sr-uuid=$LOCALSR_ID type=user virtual-size=10GiB)
 VBD_ID=$(xe vbd-create vdi-uuid=$VDI_ID vm-uuid=$VM_ID bootable=false type=Disk device=xvda)
 
+xe vm-memory-limits-set uuid=$VM_ID static-min=1GiB dynamic-min=1GiB dynamic-max=4GiB static-max=4GiB 
 xe vm-param-set uuid=$VM_ID HVM-boot-params:firmware=uefi
 xe vm-cd-add vm=$VM_ID device=1 cd-name=$(basename $CD_ISO)
 
