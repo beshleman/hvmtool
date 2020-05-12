@@ -4,7 +4,7 @@ set -e
 
 IFS='' read -r -d 'EOF'  usage <<END
 
-$(basename $0) <vm-uuid>
+$(basename $0) <vm-uuid> <attach-console>
 
 Launch an HVM on XCP-ng
 
@@ -17,14 +17,16 @@ die() {
 	exit 1
 }
 
-[[ "$#" != "1" ]] && {
+[[ "$#" != "2" ]] && {
 	die "${usage}"
 }
 
 [[ "$@" =~ "help" ]] && die ${usage}
 
 xe vm-start uuid=$1
-DOM_ID=$(xe vm-param-get uuid=$1 param-name=dom-id)
-PTY=$(xenstore-read /local/domain/${DOM_ID}/serial/0/tty)
 
-screen ${PTY}
+if [[ "$2" != "0" ]]; then
+    DOM_ID=$(xe vm-param-get uuid=$1 param-name=dom-id)
+    PTY=$(xenstore-read /local/domain/${DOM_ID}/serial/0/tty)
+    screen ${PTY}
+fi
