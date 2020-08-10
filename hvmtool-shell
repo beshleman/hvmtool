@@ -18,4 +18,6 @@ END
 
 DOM_ID=$(xe vm-param-get uuid=$1 param-name=dom-id)
 PTY=$(xenstore-read /local/domain/${DOM_ID}/serial/0/tty)
+echo "DOM_ID=$DOM_ID"
+echo "PTY=$PTY"
 screen ${PTY}

@@ -53,8 +53,13 @@ fi
 
 VM_ID=$(xe vm-install new-name-label=TestVM1 template="Other install media")
 LOCALSR_ID=$(xe sr-list name-label="Local storage" --minimal)
+
 VDI_ID=$(xe vdi-create name-label="VDI for TestVM1" sr-uuid=$LOCALSR_ID type=user virtual-size=10GiB)
-VBD_ID=$(xe vbd-create vdi-uuid=$VDI_ID vm-uuid=$VM_ID bootable=false type=Disk device=xvda)
+xe vbd-create vdi-uuid=$VDI_ID vm-uuid=$VM_ID bootable=false type=Disk device=xvda > /dev/null
+
+FAT_VDI_ID=$(xe vdi-create name-label="FAT VDI for TestVM1" sr-uuid=$LOCALSR_ID type=user virtual-size=1GiB)
+xe vbd-create vdi-uuid=$FAT_VDI_ID vm-uuid=$VM_ID bootable=false type=Disk device=7 > /dev/null
+
 NETWORK_ID=$(xe network-list bridge=xenbr0 --minimal)
 VIF_ID=$(xe vif-create vm-uuid=$VM_ID network-uuid=$NETWORK_ID device=0)
 
@@ -62,4 +67,4 @@ xe vm-memory-limits-set uuid=$VM_ID static-min=1GiB dynamic-min=1GiB dynamic-max
 xe vm-param-set uuid=$VM_ID HVM-boot-params:firmware=uefi
 xe vm-cd-add vm=$VM_ID device=1 cd-name=$(basename $CD_ISO)
 
-echo "${VM_ID}"
+echo "${VM_ID}" > ./.hvmtool-vm-uuid

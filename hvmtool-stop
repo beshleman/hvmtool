@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e
+
+IFS='' read -r -d 'EOF'  usage <<END
+
+$(basename $0) --uninstall
+
+Stop the HVM on XCP-ng
+
+EOF
+END
+
+die() {
+	echo "$@" >&2
+	exit 1
+}
+
+[[ "$@" =~ "--help" ]] && die "${usage}"
+
+VM_ID_FILE=./.hvmtool-vm-uuid
+VM_ID=$(cat ${VM_ID_FILE})
+
+UNINSTALL=0
+[[ "$@" =~ "--uninstall" ]] && {
+    UNINSTALL=1
+}
+
+xe vm-shutdown uuid=${VM_ID} --force || true
+
+if [[ "${UNINSTALL}" == "1" ]]; then
+    xe vm-uninstall uuid=${VM_ID} --force
+    rm -f ${VM_ID_FILE}
+fi
