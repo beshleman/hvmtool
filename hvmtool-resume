@@ -4,9 +4,9 @@ set -e
 
 IFS='' read -r -d 'EOF'  usage <<END
 
-$(basename $0) [--console]
+$(basename $0)
 
-Launch the HVM on XCP-ng
+Resume the HVM
 
 EOF
 END
@@ -18,19 +18,17 @@ die() {
 
 [[ "$@" =~ "--help" ]] && die "${usage}"
 
-
 use_console=0
 [[ "$@" =~ "--console" ]] && {
     use_console=1
 }
 
-
 VM_ID=$(cat ./.hvmtool-vm-uuid)
-POWER_STATE=$(xe vm-param-get uuid=${VM_ID} param-name=power-state)
-xe vm-start uuid=${VM_ID}
+xe vm-resume uuid=${VM_ID}
 
 if [[ "${use_console}" == "1" ]]; then
     DOM_ID=$(xe vm-param-get uuid=${VM_ID} param-name=dom-id)
     PTY=$(xenstore-read /local/domain/${DOM_ID}/serial/0/tty)
-    screen -L ${PTY}
+    screen ${PTY}
 fi
+

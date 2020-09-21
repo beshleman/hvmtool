@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+IFS='' read -r -d 'EOF'  usage <<END
+
+$(basename $0)
+
+Suspend the HVM
+
+EOF
+END
+
+die() {
+	echo "$@" >&2
+	exit 1
+}
+
+[[ "$@" =~ "--help" ]] && die "${usage}"
+
+xe vm-suspend uuid=$(cat .hvmtool-vm-uuid)

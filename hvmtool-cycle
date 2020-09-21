@@ -1,0 +1,59 @@
+#!/bin/bash
+
+set -e
+
+IFS='' read -r -d 'EOF'  usage <<END
+
+$(basename $0) [--console]
+
+Args:
+    console - Drop into console when the vm starts
+
+Run a Alpine VM through the cycle:
+
+    1. Install
+    2. Start
+    3. Suspend
+    4. Resume
+    5. Stop
+    6. Start
+    7. Stop
+    8. Uninstall
+
+EOF
+END
+
+[[ "$@" =~ "--console" ]] && {
+    START_ARGS="${START_ARGS} --console"
+    RESUME_ARGS="${RESUME_ARGS} --console"
+}
+
+yes | rm -f /var/log/uefistored-*
+rm -f aggregated.log
+
+hvmtool/hvmtool-build /var/opt/xen/iso_import/alpine-virt-3.11.5-x86_64.iso 
+
+hvmtool/hvmtool-start ${START_ARGS}
+
+sleep 10
+
+hvmtool/hvmtool-suspend
+
+sleep 10
+
+hvmtool/hvmtool-resume ${RESUME_ARGS}
+
+sleep 10
+
+hvmtool/hvmtool-stop
+
+sleep 10
+
+hvmtool/hvmtool-start ${START_ARGS}
+
+sleep 10
+
+hvmtool/hvmtool-stop --uninstall
+
+
+cat /var/log/uefistored-* > aggregated.log

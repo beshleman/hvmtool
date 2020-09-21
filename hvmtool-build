@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -x
 set -e
 
 IFS='' read -r -d 'EOF'  usage <<END
@@ -63,7 +64,7 @@ xe vbd-create vdi-uuid=$FAT_VDI_ID vm-uuid=$VM_ID bootable=false type=Disk devic
 NETWORK_ID=$(xe network-list bridge=xenbr0 --minimal)
 VIF_ID=$(xe vif-create vm-uuid=$VM_ID network-uuid=$NETWORK_ID device=0)
 
-xe vm-memory-limits-set uuid=$VM_ID static-min=1GiB dynamic-min=1GiB dynamic-max=4GiB static-max=4GiB 
+xe vm-memory-limits-set uuid=$VM_ID static-min=8GiB dynamic-min=8GiB dynamic-max=16GiB static-max=16GiB 
 xe vm-param-set uuid=$VM_ID HVM-boot-params:firmware=uefi
 xe vm-cd-add vm=$VM_ID device=1 cd-name=$(basename $CD_ISO)
 
